@@ -105,7 +105,7 @@ elif task == "Document Intrusion":
     @st.cache_data
     def load_data():
         df = pd.read_csv("document_intrusion.csv")
-        df['Docss_with_Intruder_Shuffled'] = df['Docs_with_Intruder_Shuffled'].apply(eval)
+        df['Documents_with_Intruder_Shuffled'] = df['Documents_with_Intruder_Shuffled'].apply(eval)
         return df.drop_duplicates(subset=['Topic_ID'])
 
     df = load_data()
@@ -152,8 +152,8 @@ elif task == "Document Intrusion":
     # Current document intrusion question
     row = df.iloc[st.session_state.current_index]
     topic_name = row['Topic_Name']
-    docs = row['Documents_with_Intruder_Shuffled']
-    correct_doc = row['Intruder']
+    docs = row["Documents_with_Intruder_Shuffled"] 
+    correct_doc = row["Intruder"]
 
     st.title("🔍 Document Intrusion Task")
     st.subheader("Which document does NOT belong?")
