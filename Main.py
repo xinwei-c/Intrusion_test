@@ -13,12 +13,6 @@ from datetime import datetime
 #from google.oauth2.service_account import Credentials
 
 #scope = ["https://www.googleapis.com/auth/spreadsheets"]
-
-def upload_to_google_sheet(data_dict):
-    creds = Credentials.from_service_account_file("gspread_creds.json", scopes=scope)
-    client = gspread.authorize(creds)
-    sheet = client.open("Surveyresults").sheet1
-    sheet.append_row(list(data_dict.values()))
     
 st.set_page_config(page_title="Intrusion Evaluation", layout="centered")
 
@@ -113,13 +107,7 @@ if task == "Word Intrusion":
 
 # add docs
 elif task == "Document Intrusion":
-    @st.cache_data
-    def load_data():
-        df = pd.read_csv("document_intrusion.csv")
-        df['Documents_with_Intruder_Shuffled'] = df['Documents_with_Intruder_Shuffled'].apply(eval)
-        return df.drop_duplicates(subset=['Topic_ID'])
 
-    df = load_data()
 
     # Session setup
     if 'started' not in st.session_state:
