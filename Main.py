@@ -19,165 +19,171 @@ def upload_to_google_sheet(data_dict):
     client = gspread.authorize(creds)
     sheet = client.open("Surveyresults").sheet1
     sheet.append_row(list(data_dict.values()))
-
-#load csv
-@st.cache_data
-def load_data():
-    df = pd.read_csv("word_intrusion.csv")
-    df['Words_with_Intruder_Shuffled'] = df['Words_with_Intruder_Shuffled'].apply(eval)
-    return df.drop_duplicates(subset=['Topic_ID'])
-
-df = load_data()
-
-#set
-if 'started' not in st.session_state:
-    st.session_state.started = False
-if 'participant_id' not in st.session_state:
-    st.session_state.participant_id = ""
-if 'current_index' not in st.session_state:
-    st.session_state.current_index = 0
-if 'responses' not in st.session_state:
-    st.session_state.responses = []
-
-#consent+id
-if not st.session_state.started:
-    st.title("🧠 Word Intrusion Evaluation")
-
-    st.markdown("""
-    Welcome! In this task, you'll see a group of words. One word does **not** belong.
-
-    Your job is to identify that **intruder word**.
-
-    **By clicking Start, you consent to participate.** Your answers will be collected anonymously.
-    """)
     
-    st.session_state.participant_id = st.text_input("Enter your Participant ID to begin:")
+st.set_page_config(page_title="Intrusion Evaluation", layout="centered")
 
-    if st.session_state.participant_id and st.button("✅ Start"):
-        st.session_state.started = True
-    st.stop()
+st.sidebar.title("🔧 Select Task")
+task = st.sidebar.radio("Choose a task to evaluate:", ["Word Intrusion", "Document Intrusion"])
+
+if task == "Word Intrusion":
+    #load csv
+    @st.cache_data
+    def load_data():
+        df = pd.read_csv("word_intrusion.csv")
+        df['Words_with_Intruder_Shuffled'] = df['Words_with_Intruder_Shuffled'].apply(eval)
+        return df.drop_duplicates(subset=['Topic_ID'])
+
+    df = load_data()
+
+    #set
+    if 'started' not in st.session_state:
+        st.session_state.started = False
+    if 'participant_id' not in st.session_state:
+        st.session_state.participant_id = ""
+    if 'current_index' not in st.session_state:
+        st.session_state.current_index = 0
+    if 'responses' not in st.session_state:
+        st.session_state.responses = []
+    
+#consent+id
+    if not st.session_state.started:
+        st.title("🧠 Word Intrusion Evaluation")
+
+        st.markdown("""
+        Welcome! In this task, you'll see a group of words. One word does **not** belong.
+
+        Your job is to identify that **intruder word**.
+
+        **By clicking Start, you consent to participate.** Your answers will be collected anonymously.
+        """)
+    
+        st.session_state.participant_id = st.text_input("Enter your Participant ID to begin:")
+
+        if st.session_state.participant_id and st.button("✅ Start"):
+            st.session_state.started = True
+        st.stop()
 
 #end
 
-if st.session_state.current_index >= len(df):
-    st.title("🎉 Thank you!")
-    st.write("You've completed all questions.")
+    if st.session_state.current_index >= len(df):
+        st.title("🎉 Thank you!")
+        st.write("You've completed all questions.")
 
     # Create result DataFrame
-    result_df = pd.DataFrame(st.session_state.responses)
-    result_df['is_correct'] = result_df['selected'] == result_df['correct']
-    result_df['accuracy'] = result_df['is_correct'].astype(int)
+        result_df = pd.DataFrame(st.session_state.responses)
+        result_df['is_correct'] = result_df['selected'] == result_df['correct']
+        result_df['accuracy'] = result_df['is_correct'].astype(int)
 
     # Upload each row to Google Sheets
-    for row in result_df.to_dict(orient='records'):
-        upload_to_google_sheet(row)
+        for row in result_df.to_dict(orient='records'):
+            upload_to_google_sheet(row)
 
     # Optionally offer CSV download
-    csv = result_df.to_csv(index=False).encode('utf-8')
-    filename = f"results_{st.session_state.participant_id}.csv"
-    st.download_button("📥 Download Your Results", csv, filename, mime='text/csv')
+        csv = result_df.to_csv(index=False).encode('utf-8')
+        filename = f"results_{st.session_state.participant_id}.csv"
+        st.download_button("📥 Download Your Results", csv, filename, mime='text/csv')
 
-    st.stop()
+        st.stop()
 
 #current question
-row = df.iloc[st.session_state.current_index]
-topic_name = row['Topic_Name']
-words = row['Words_with_Intruder_Shuffled']
-correct_word = row['Intruder']
+    row = df.iloc[st.session_state.current_index]
+    topic_name = row['Topic_Name']
+    words = row['Words_with_Intruder_Shuffled']
+    correct_word = row['Intruder']
 
-st.title("🔍 Word Intrusion Task")
-st.subheader(f"Which word does NOT belong?")
-user_choice = st.radio("", options=words)
+    st.title("🔍 Word Intrusion Task")
+    st.subheader(f"Which word does NOT belong?")
+    user_choice = st.radio("", options=words)
 
 #submit
-if st.button("Submit"):
-    st.session_state.responses.append({
-        "timestamp": datetime.now().isoformat(),
-        "participant_id": st.session_state.participant_id,
-        "topic_id": row['Topic_ID'],
-        "topic_name": topic_name,
-        "words": words,
-        "selected": user_choice,
-        "correct": correct_word,
-    })
-    st.session_state.current_index += 1
-    st.rerun()
+    if st.button("Submit"):
+        st.session_state.responses.append({
+            "timestamp": datetime.now().isoformat(),
+            "participant_id": st.session_state.participant_id,
+            "topic_id": row['Topic_ID'],
+            "topic_name": topic_name,
+            "words": words,
+            "selected": user_choice,
+            "correct": correct_word,
+        })
+        st.session_state.current_index += 1
+        st.rerun()
 
 
 
 # add docs
+elif task == "Document Intrusion":
+    @st.cache_data
+    def load_data():
+        df = pd.read_csv("document_intrusion.csv")
+        df['Documents_with_Intruder_Shuffled'] = df['Documents_with_Intruder_Shuffled'].apply(eval)
+        return df.drop_duplicates(subset=['Topic_ID'])
 
-@st.cache_data
-def load_data():
-    df = pd.read_csv("document_intrusion.csv")
-    df['Documents_with_Intruder_Shuffled'] = df['Documents_with_Intruder_Shuffled'].apply(eval)
-    return df.drop_duplicates(subset=['Topic_ID'])
+    df = load_data()
 
-df = load_data()
+    # Session setup
+    if 'started' not in st.session_state:
+        st.session_state.started = False
+    if 'participant_id' not in st.session_state:
+        st.session_state.participant_id = ""
+    if 'current_index' not in st.session_state:
+        st.session_state.current_index = 0
+    if 'responses' not in st.session_state:
+        st.session_state.responses = []
 
-# Session setup
-if 'started' not in st.session_state:
-    st.session_state.started = False
-if 'participant_id' not in st.session_state:
-    st.session_state.participant_id = ""
-if 'current_index' not in st.session_state:
-    st.session_state.current_index = 0
-if 'responses' not in st.session_state:
-    st.session_state.responses = []
+    # Consent & ID
+    if not st.session_state.started:
+        st.title("📄 Document Intrusion Evaluation")
+        st.markdown("""
+        Welcome! In this task, you’ll see several Reddit posts. One post does **not** belong with the rest.
 
-# Consent & ID
-if not st.session_state.started:
-    st.title("📄 Document Intrusion Evaluation")
-    st.markdown("""
-    Welcome! In this task, you’ll see several Reddit posts. One post does **not** belong with the rest.
+        Your job is to pick the **intruder** post.
 
-    Your job is to pick the **intruder** post.
+        **By clicking Start, you consent to participate.** Your answers will be collected anonymously.
+        """)
+        st.session_state.participant_id = st.text_input("Enter your Participant ID to begin:")
+        if st.session_state.participant_id and st.button("✅ Start"):
+            st.session_state.started = True
+        st.stop()
 
-    **By clicking Start, you consent to participate.** Your answers will be collected anonymously.
-    """)
-    st.session_state.participant_id = st.text_input("Enter your Participant ID to begin:")
-    if st.session_state.participant_id and st.button("✅ Start"):
-        st.session_state.started = True
-    st.stop()
+    # End of questions
+    if st.session_state.current_index >= len(df):
+        st.title("🎉 Thank you!")
+        st.write("You've completed all document intrusion questions.")
 
-# End of questions
-if st.session_state.current_index >= len(df):
-    st.title("🎉 Thank you!")
-    st.write("You've completed all document intrusion questions.")
+        result_df = pd.DataFrame(st.session_state.responses)
+        result_df['is_correct'] = result_df['selected'] == result_df['correct']
+        result_df['accuracy'] = result_df['is_correct'].astype(int)
 
-    result_df = pd.DataFrame(st.session_state.responses)
-    result_df['is_correct'] = result_df['selected'] == result_df['correct']
-    result_df['accuracy'] = result_df['is_correct'].astype(int)
+        # Upload to Google Sheet
+        for row in result_df.to_dict(orient='records'):
+            upload_to_google_sheet(row)
 
-    # Upload to Google Sheet
-    for row in result_df.to_dict(orient='records'):
-        upload_to_google_sheet(row)
+        # Offer download
+        csv = result_df.to_csv(index=False).encode('utf-8')
+        filename = f"doc_results_{st.session_state.participant_id}.csv"
+        st.download_button("Download Your Results", csv, filename, mime='text/csv')
+        st.stop()
 
-    # Offer download
-    csv = result_df.to_csv(index=False).encode('utf-8')
-    filename = f"doc_results_{st.session_state.participant_id}.csv"
-    st.download_button("📥 Download Your Results", csv, filename, mime='text/csv')
-    st.stop()
+    # Current document intrusion question
+    row = df.iloc[st.session_state.current_index]
+    topic_name = row['Topic_Name']
+    docs = row['Documents_with_Intruder_Shuffled']
+    correct_doc = row['Intruder']
 
-# Current document intrusion question
-row = df.iloc[st.session_state.current_index]
-topic_name = row['Topic_Name']
-docs = row['Documents_with_Intruder_Shuffled']
-correct_doc = row['Intruder']
+    st.title("🔍 Document Intrusion Task")
+    st.subheader("Which document does NOT belong?")
+    user_choice = st.radio("Select the intruder document:", options=docs)
 
-st.title("🔍 Document Intrusion Task")
-st.subheader("Which document does NOT belong?")
-user_choice = st.radio("Select the intruder document:", options=docs)
-
-if st.button("Submit"):
-    st.session_state.responses.append({
-        "timestamp": datetime.now().isoformat(),
-        "participant_id": st.session_state.participant_id,
-        "topic_id": row['Topic_ID'],
-        "topic_name": topic_name,
-        "documents": docs,
-        "selected": user_choice,
-        "correct": correct_doc,
-    })
-    st.session_state.current_index += 1
-    st.rerun()
+    if st.button("Submit"):
+        st.session_state.responses.append({
+            "timestamp": datetime.now().isoformat(),
+            "participant_id": st.session_state.participant_id,
+            "topic_id": row['Topic_ID'],
+            "topic_name": topic_name,
+            "documents": docs,
+            "selected": user_choice,
+            "correct": correct_doc,
+        })
+        st.session_state.current_index += 1
+        st.rerun()
