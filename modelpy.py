@@ -145,7 +145,7 @@ correct_word = row['Intruder']
 
 st.title("🔍 Word Intrusion Task")
 st.subheader(f"Which word does NOT belong?")
-#user_choice = st.radio("", options=words)
+user_choice = st.radio("", options=words)
 
 #submit
 if st.button("Submit"):
