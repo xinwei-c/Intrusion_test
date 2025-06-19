@@ -1,0 +1,9 @@
+Topic_ID,Topic_Name,Words_with_Intruder_Shuffled,Intruder
+0,0_family_parents_daughter_mother,"['family', 'street', 'daughter', 'mother', 'parents']",street
+1,1_meal_eating_eat_food,"['food', 'teacher', 'eat', 'eating', 'meal']",teacher
+2,2_wedding_bride_engaged_fiance,"['grades', 'engaged', 'wedding', 'bride', 'fiance']",grades
+3,3_friends_talk_relationship_girlfriend,"['talk', 'relationship', 'girlfriend', 'mother', 'friends']",mother
+4,4_pets_pet_dogs_dog,"['dogs', 'fiancé', 'dog', 'pet', 'pets']",fiancé
+5,5_roommate_roommates_apartment_bedroom,"['bedroom', 'roommates', 'wedding', 'apartment', 'roommate']",wedding
+6,6_parking_neighbors_neighbor_neighborhood,"['parking', 'neighbor', 'neighbors', 'dogs', 'neighborhood']",dogs
+7,7_teacher_teachers_students_classes,"['neighbours', 'teacher', 'students', 'teachers', 'classes']",neighbours
