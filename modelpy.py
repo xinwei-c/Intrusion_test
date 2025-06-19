@@ -9,23 +9,16 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
+import gspread
+from google.oauth2.service_account import Credentials
 
-#upload
-def upload_csv_to_drive(local_file_path, folder_id):
-    gauth = GoogleAuth()
-    gauth.LocalWebserverAuth()  # This will open your browser for login
+def upload_to_google_sheet(data_dict):
+    scope = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_file("gspread_creds.json", scopes=scope)
+    client = gspread.authorize(creds)
 
-    drive = GoogleDrive(gauth)
-
-    file = drive.CreateFile({
-        'title': local_file_path.split('/')[-1],
-        'parents': [{'id': folder_id}]
-    })
-    file.SetContentFile(local_file_path)
-    file.Upload()
-    print("✅ Uploaded to Google Drive.")
+    sheet = client.open("Surveyresults").sheet1 
+    sheet.append_row(list(data_dict.values()))
 
 #load csv
 @st.cache_data
@@ -68,20 +61,22 @@ if not st.session_state.started:
 
 if st.session_state.current_index >= len(df):
     st.title("🎉 Thank you!")
-    st.write("You’ve completed all the questions.")
+    st.write("You've completed all questions.")
 
+    # Create result DataFrame
     result_df = pd.DataFrame(st.session_state.responses)
     result_df['is_correct'] = result_df['selected'] == result_df['correct']
     result_df['accuracy'] = result_df['is_correct'].astype(int)
 
-    filename = f"results_{st.session_state.participant_id}.csv"
-    result_df.to_csv(filename, index=False)
+    # Upload each row to Google Sheets
+    for row in result_df.to_dict(orient='records'):
+        upload_to_google_sheet(row)
 
-    #upload to Google Drive
-    upload_csv_to_drive(filename, folder_id="15q7mXXBhFbjDzpYrC5yahHRiDeyJoOtm")
-
+    # Optionally offer CSV download
     csv = result_df.to_csv(index=False).encode('utf-8')
+    filename = f"results_{st.session_state.participant_id}.csv"
     st.download_button("📥 Download Your Results", csv, filename, mime='text/csv')
+
     st.stop()
 
 #current question
