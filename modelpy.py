@@ -9,79 +9,23 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
-# In[ ]:
+#upload
+def upload_csv_to_drive(local_file_path, folder_id):
+    gauth = GoogleAuth()
+    gauth.LocalWebserverAuth()  # This will open your browser for login
 
+    drive = GoogleDrive(gauth)
 
-# #clean
-# df = pd.read_csv("word_intrusion.csv")
-# df['Words_with_Intruder_Shuffled'] = df['Words_with_Intruder_Shuffled'].apply(eval)
-# df = df.drop_duplicates(subset=['Topic_ID'])  # One question per topic
-
-# #start set
-# if 'started' not in st.session_state:
-#     st.session_state.started = False
-# if 'current_index' not in st.session_state:
-#     st.session_state.current_index = 0
-# if 'responses' not in st.session_state:
-#     st.session_state.responses = []
-
-# #instruction 
-# if not st.session_state.started:
-#     st.title("Word Intrusion Evaluation")
-#     st.markdown("""
-#     Thank you for participating in this short evaluation task.
-
-#     In this task, you will see a group of words. One of the words **does not belong** to the group.
-    
-#     Your job is to choose the word that is least related to the others.
-
-#     **Consent**: By clicking “Start,” you agree to let us anonymously store your responses for academic purposes. Your answers will be used for topic model evaluation. No personal information is collected.
-#     """)
-
-#     if st.button("✅ Start"):
-#         st.session_state.started = True
-#     st.stop()
-
-# #end
-# if st.session_state.current_index >= len(df):
-#     st.title("🎉 Thank you for your participation!")
-#     st.write("You've completed all the questions. Your results are saved.")
-
-#     result_df = pd.DataFrame(st.session_state.responses)
-#     result_df['is_correct'] = result_df['selected'] == result_df['correct']
-#     result_df['accuracy'] = result_df['is_correct'].astype(int)
-
-#     csv = result_df.to_csv(index=False).encode('utf-8')
-#     st.download_button("📥 Researcher: Download Results CSV", csv, "intrusion_results.csv", "text/csv")
-#     st.stop()
-
-# # --- Display current task ---
-# row = df.iloc[st.session_state.current_index]
-# topic_name = row['Topic_Name']
-# words = row['Words_with_Intruder_Shuffled']
-# correct_word = row['Intruder']
-
-# st.title("🔍 Word Intrusion Task")
-# st.subheader(f"Topic: {topic_name}")
-# user_choice = st.radio("Which word does NOT belong?", options=words)
-
-# # --- Submit logic ---
-# if st.button("Submit"):
-#     st.session_state.responses.append({
-#         "timestamp": datetime.now().isoformat(),
-#         "topic_id": row['Topic_ID'],
-#         "topic_name": topic_name,
-#         "words": words,
-#         "selected": user_choice,
-#         "correct": correct_word,
-#     })
-#     st.session_state.current_index += 1
-#     st.rerun()
-
-
-# In[ ]:
-
+    file = drive.CreateFile({
+        'title': local_file_path.split('/')[-1],
+        'parents': [{'id': folder_id}]
+    })
+    file.SetContentFile(local_file_path)
+    file.Upload()
+    print("✅ Uploaded to Google Drive.")
 
 #load csv
 @st.cache_data
@@ -126,14 +70,17 @@ if st.session_state.current_index >= len(df):
     st.title("🎉 Thank you!")
     st.write("You’ve completed all the questions.")
 
-    # Save response to downloadable CSV
     result_df = pd.DataFrame(st.session_state.responses)
     result_df['is_correct'] = result_df['selected'] == result_df['correct']
     result_df['accuracy'] = result_df['is_correct'].astype(int)
 
-    csv = result_df.to_csv(index=False).encode('utf-8')
     filename = f"results_{st.session_state.participant_id}.csv"
+    result_df.to_csv(filename, index=False)
 
+    #upload to Google Drive
+    upload_csv_to_drive(filename, folder_id="15q7mXXBhFbjDzpYrC5yahHRiDeyJoOtm")
+
+    csv = result_df.to_csv(index=False).encode('utf-8')
     st.download_button("📥 Download Your Results", csv, filename, mime='text/csv')
     st.stop()
 
@@ -160,4 +107,3 @@ if st.button("Submit"):
     })
     st.session_state.current_index += 1
     st.rerun()
-
