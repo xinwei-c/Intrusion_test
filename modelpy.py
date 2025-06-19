@@ -12,6 +12,8 @@ from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
 
+creds = Credentials.from_service_account_file("gspread_creds.json", scopes=scope)
+ 
 def upload_to_google_sheet(data_dict):
     scope = ["https://www.googleapis.com/auth/spreadsheets"]
     creds = Credentials.from_service_account_file("gspread_creds.json", scopes=scope)
