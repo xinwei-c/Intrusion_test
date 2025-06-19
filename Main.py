@@ -63,16 +63,10 @@ if task == "Word Intrusion":
         st.title("🎉 Thank you!")
         st.write("You've completed all questions.")
 
-    # Create result DataFrame
         result_df = pd.DataFrame(st.session_state.responses)
         result_df['is_correct'] = result_df['selected'] == result_df['correct']
         result_df['accuracy'] = result_df['is_correct'].astype(int)
 
-    # Upload each row to Google Sheets
-        for row in result_df.to_dict(orient='records'):
-            upload_to_google_sheet(row)
-
-    # Optionally offer CSV download
         csv = result_df.to_csv(index=False).encode('utf-8')
         filename = f"results_{st.session_state.participant_id}.csv"
         st.download_button("📥 Download Your Results", csv, filename, mime='text/csv')
@@ -107,7 +101,14 @@ if task == "Word Intrusion":
 
 # add docs
 elif task == "Document Intrusion":
+    #load csv
+    @st.cache_data
+    def load_data():
+        df = pd.read_csv("document_intrusion.csv")
+        df['Docss_with_Intruder_Shuffled'] = df['Docs_with_Intruder_Shuffled'].apply(eval)
+        return df.drop_duplicates(subset=['Topic_ID'])
 
+    df = load_data()
 
     # Session setup
     if 'started' not in st.session_state:
@@ -143,11 +144,6 @@ elif task == "Document Intrusion":
         result_df['is_correct'] = result_df['selected'] == result_df['correct']
         result_df['accuracy'] = result_df['is_correct'].astype(int)
 
-        # Upload to Google Sheet
-        for row in result_df.to_dict(orient='records'):
-            upload_to_google_sheet(row)
-
-        # Offer download
         csv = result_df.to_csv(index=False).encode('utf-8')
         filename = f"doc_results_{st.session_state.participant_id}.csv"
         st.download_button("Download Your Results", csv, filename, mime='text/csv')
