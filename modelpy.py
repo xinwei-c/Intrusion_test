@@ -144,7 +144,8 @@ words = row['Words_with_Intruder_Shuffled']
 correct_word = row['Intruder']
 
 st.title("🔍 Word Intrusion Task")
-user_choice = st.radio("Which word does NOT belong?", options=words)
+st.subheader(f"Which word does NOT belong?")
+#user_choice = st.radio("", options=words)
 
 #submit
 if st.button("Submit"):
